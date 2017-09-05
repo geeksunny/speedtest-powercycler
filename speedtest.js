@@ -1,22 +1,23 @@
 //
 //
-const requestify = require('requestify');
-const vm = require('vm');
+const phantom = require('phantom');
+const waitUntil = require('wait-until');
 
+const EVENT_NAME = "phantomHookEvent";
 const SPEEDTEST_URL = "https://www.dslreports.com/assets/st/1.6/js/speedtest.js";
-//const SPEEDTEST_API_KEY = "12345678";
+const SPEEDTEST_API_KEY = "12345678";
 
 
-const DEFAULT_CONFIG = {
-    // ["GPRS", "3G", "4G", "WiFi", "Wireless", "Satellite", "DSL", "Cable", "Fiber", "", "Unsure"]
-    conntype: undefined,
-    // [ true: complete results, false: faster results ]
-    bufferbloat: false,
-    // [ 4: fastest, 2: default, 1: slowest ]
-    hz: 2//,
-    // [ optional user data ]
-    //udata: {"key":value};
-};
+// const DEFAULT_CONFIG = {
+//     // ["GPRS", "3G", "4G", "WiFi", "Wireless", "Satellite", "DSL", "Cable", "Fiber", "", "Unsure"]
+//     conntype: undefined,
+//     // [ true: complete results, false: faster results ]
+//     bufferbloat: false,
+//     // [ 4: fastest, 2: default, 1: slowest ]
+//     hz: 2//,
+//     // [ optional user data ]
+//     //udata: {"key":value};
+// };
 
 
 function extend(target) {
@@ -63,6 +64,20 @@ Speedtest.prototype.stop = function() {
     }
     this._running = false;
     dslr_speedtest({ op: 'stop' });
+};
+
+Speedtest.prototype.awaitResult = function(timeout) {
+    var every = 500;
+    var times = timeout / every;
+    waitUntil()
+        .interval(every)
+        .times(times)
+        .condition(function() {
+            return this._running === false;
+        })
+        .done(function(result) {
+            // if result is false then we timed-out!
+        });
 };
 
 
