@@ -1,13 +1,23 @@
 //
 //
+const util = require('util');
 const phantom = require('phantom');
 const waitUntil = require('wait-until');
 
-const EVENT_NAME = "phantomHookEvent";
-const SPEEDTEST_URL = "https://www.dslreports.com/assets/st/1.6/js/speedtest.js";
-const SPEEDTEST_API_KEY = "12345678";
+// TODO: Look in to making this injectable into phantom/run.html
+//const SPEEDTEST_URL = "https://www.dslreports.com/assets/st/1.6/js/speedtest.js";
+//const SPEEDTEST_API_KEY = "12345678";
+
+const SPEEDTEST_URL = "./phantom/run.html";
+const DEBUG_LOG_FORMAT = "[DEBUG] :: %s\n";
+const EVENT_NAME = "phantomHookEvent"; // TODO: Should this be injected into/retrieved from the phantom_runner.js?
+const WAIT_INTERVAL = 500;          // 0.5s
+const WAIT_TIMEOUT_DEFAULT = 60000; // 60s
 
 
+// TODO: Implement using node-phantom examples: https://github.com/amir20/phantomjs-node/tree/master/examples
+
+// TODO: Add documentation and include the info below
 // const DEFAULT_CONFIG = {
 //     // ["GPRS", "3G", "4G", "WiFi", "Wireless", "Satellite", "DSL", "Cable", "Fiber", "", "Unsure"]
 //     conntype: undefined,
@@ -21,9 +31,9 @@ const SPEEDTEST_API_KEY = "12345678";
 
 
 function extend(target) {
-    var sources = [].slice.call(arguments, 1);
+    const sources = [].slice.call(arguments, 1);
     sources.forEach(function (source) {
-        for (var prop in source) {
+        for (const prop in source) {
             target[prop] = source[prop];
         }
     });
@@ -32,107 +42,99 @@ function extend(target) {
 
 
 function Speedtest(apiKey, config, callbacks) {
-    this._ready = false;
-    this._queued = false;
     this._running = false;
     this._debug = false;
 
-    this._config = extend({}, DEFAULT_CONFIG, config, this._prepCallbacks(callbacks));
-    this._config.apikey = apiKey;
+    this._phantom = null;
+    this._page = null;
 
-    this._init();
+    this._callbacks = extend({}, callbacks);
+    this._config = extend({}, DEFAULT_CONFIG, config);
+    this._config.apikey = apiKey;
 }
 
-
-Speedtest.prototype.start = function() {
-    if (this._running) {
-        return;
-    } else if (!this._ready) {
-        this._queued = true;
-        return;
-    }
-    this._running = true;
-    dslr_speedtest({
-        op: 'start',
-        params: this._config
-    });
+Speedtest.build = async function(apiKey, config, callbacks) {
+    const speedtest = new Speedtest(apiKey, config, callbacks);
+    await speedtest._init();
+    return speedtest;
 };
 
-Speedtest.prototype.stop = function() {
-    if (!this._running) {
-        return;
+Speedtest.prototype._init = async function() {
+    this._phantom = await phantom.create();
+    this._page = await this._phantom.createPage();
+    await this._page.on(EVENT_NAME, function(data) {
+        this._handleEvent(data);
+    });
+    const status = await this._page.open(SPEEDTEST_URL);
+    // TODO: Check status, throw error if necessary
+};
+
+Speedtest.prototype._cleanup = async function() {
+    await this._phantom.exit();
+};
+
+
+Speedtest.prototype.start = async function(timeout) {
+    this._running = true;
+    const start = util.format('function(){ start(%s); }', JSON.stringify(this._config));
+    await this._page.evaluateJavaScript(start);
+};
+
+Speedtest.prototype.stop = async function() {
+    this.finish();
+    await this._page.evaluateJavaScript('function(){ stop(); }');
+    // TODO: Stop the speed test on the phantom_runner
+};
+
+Speedtest.prototype._handleEvent = function(data) {
+    const callback = this._callbacks[data.detail.key];
+    this._handleCallback(data.detail.data, callback);
+    switch (data.detail.key) {
+        case "oncomplete":
+        case "onerror":
+            this._finish();
+            break;
+        case "onstatus":
+        case "onprogress":
+        case "onconfirm":
+        default:
+            //
+            break;
     }
+};
+
+Speedtest.prototype._finish = function() {
     this._running = false;
-    dslr_speedtest({ op: 'stop' });
+    // TODO: Should run this._cleanup automatically?
+    // TODO: Is this method even necessary??
 };
 
 Speedtest.prototype.awaitResult = function(timeout) {
-    var every = 500;
-    var times = timeout / every;
+    // TODO: Is this still necessary or could it be replaced by async/await?
+    const _timeout = (timeout > 0) ? timeout : WAIT_TIMEOUT_DEFAULT;
+    const times = _timeout / WAIT_INTERVAL;
     waitUntil()
-        .interval(every)
+        .interval(WAIT_INTERVAL)
         .times(times)
         .condition(function() {
             return this._running === false;
         })
         .done(function(result) {
-            // if result is false then we timed-out!
+            // todo if result is false then we timed-out!
         });
 };
 
-
-Speedtest.prototype._prepCallbacks = function(callbacks) {
-    return extend({
-        onstatus: this._debugLog,
-        onprogress: this._debugLog,
-        onerror: this._debugLog,
-        oncomplete: this._debugLog,
-        onconfirm: this._debugLog
-    }, callbacks);
-};
-
-Speedtest.prototype._init = function() {
-    var parent = this;
-    // Cache expires in 1 week.
-    requestify.get(SPEEDTEST_URL, {cache:{cache:true,expires:604800000}}).then(function(response) {
-        // TODO: Does this need to be stored in a context variable?
-        vm.runInThisContext(response.getBody());
-        parent._ready = true;
-        if (parent._queued) {
-            parent.start();
-        }
-    });
-};
 
 Speedtest.prototype.enableDebugMode = function(bool) {
     this._debug = bool === true;
 };
 
-Speedtest.prototype._debugLog = function(o) {
-    if (this._debug) {
-        console.log(JSON.stringify(o));
+Speedtest.prototype._handleCallback = function(data, delegate) {
+    const result = (delegate instanceof Function) ? delegate(data) : false;
+    if (result !== true && this._debug) {
+        const line = util.format(DEBUG_LOG_FORMAT, JSON.stringify(data));
+        console.log(line);
     }
 };
-
-// Speedtest.prototype._onStatus = function(o) {
-//     // { direction, down, up, ping }
-// };
-//
-// Speedtest.prototype._onProgress = function(o) {
-//     // { doing, progress }
-// };
-//
-// Speedtest.prototype._onError = function(o) {
-//     // { msg }
-//     console.log("Error: "+o.msg);
-// };
-//
-// Speedtest.prototype._onComplete = function(o) {
-//     // todo: revisit
-//     console.log(JSON.stringify(o));
-// };
-//
-// Speedtest.prototype._onConfirm = function(o) {
-// };
 
 module.exports = Speedtest;

@@ -38,5 +38,7 @@ var callbacks = {
 };
 
 
-tester = new Speedtest(SPEEDTEST_API_KEY, null, callbacks);
+// TODO: Does this need to be async/await here?
+tester = Speedtest.build(SPEEDTEST_API_KEY, null, callbacks);
+tester.enableDebugMode(true);
 tester.start();
