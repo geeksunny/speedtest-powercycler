@@ -11,37 +11,27 @@ function dispatch(key, data) {
     document.dispatchEvent(ev);
 }
 
-var onstatus = function(o) {
-    dispatch("onstatus", o);
-};
-
-var oncomplete = function(o) {
-    dispatch("oncomplete", o);
-};
-
-var onerror = function(o) {
-    dispatch("onerror", o);
-    // return true ?
-};
-
-var onconfirm = function(o) {
-    dispatch("onconfirm", o);
-    // return true ?
-};
-
-var onprogress = function(o) {
-    dispatch("onprogress", o);
-};
-
-var defaultConfig = {
+const DEFAULT_CONFIG = {
     conntype: undefined,
     bufferbloat: false,
     hz: 2,
-    onstatus: onstatus,
-    oncomplete: oncomplete,
-    onerror: onerror,
-    onconfirm: onconfirm,
-    onprogress: onprogress
+    onstatus: function(o) {
+        dispatch("onstatus", o);
+    },
+    oncomplete: function(o) {
+        dispatch("oncomplete", o);
+    },
+    onerror: function(o) {
+        dispatch("onerror", o);
+        // return true ?
+    },
+    onconfirm: function(o) {
+        dispatch("onconfirm", o);
+        return true
+    },
+    onprogress: function(o) {
+        dispatch("onprogress", o);
+    }
 };
 
 
@@ -59,6 +49,7 @@ function start(config) {
 
 function stop() {
     dslr_speedtest({ op: 'stop' });
+    dispatch("onstatus", {stopped:true});
 }
 
 function extend(target) {

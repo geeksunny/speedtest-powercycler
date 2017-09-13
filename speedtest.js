@@ -18,16 +18,16 @@ const WAIT_TIMEOUT_DEFAULT = 60000; // 60s
 // TODO: Implement using node-phantom examples: https://github.com/amir20/phantomjs-node/tree/master/examples
 
 // TODO: Add documentation and include the info below
-// const DEFAULT_CONFIG = {
-//     // ["GPRS", "3G", "4G", "WiFi", "Wireless", "Satellite", "DSL", "Cable", "Fiber", "", "Unsure"]
-//     conntype: undefined,
-//     // [ true: complete results, false: faster results ]
-//     bufferbloat: false,
-//     // [ 4: fastest, 2: default, 1: slowest ]
-//     hz: 2//,
-//     // [ optional user data ]
-//     //udata: {"key":value};
-// };
+const DEFAULT_CONFIG = {
+    // ["GPRS", "3G", "4G", "WiFi", "Wireless", "Satellite", "DSL", "Cable", "Fiber", "", "Unsure"]
+    conntype: undefined,
+    // [ true: complete results, false: faster results ]
+    bufferbloat: false,
+    // [ 4: fastest, 2: default, 1: slowest ]
+    hz: 2//,
+    // [ optional user data ]
+    //udata: {"key":value};
+};
 
 
 function extend(target) {
@@ -60,8 +60,9 @@ Speedtest.build = async function(apiKey, config, callbacks) {
 };
 
 Speedtest.prototype._init = async function() {
-    this._phantom = await phantom.create();
+    this._phantom = await phantom.create(['--web-security=no'], {/* logLevel: 'debug' */});
     this._page = await this._phantom.createPage();
+    await this._page.on('onConsoleMessage', function (msg) { console.log(msg); });
     await this._page.on(EVENT_NAME, function(data) {
         this._handleEvent(data);
     });
@@ -81,7 +82,7 @@ Speedtest.prototype.start = async function(timeout) {
 };
 
 Speedtest.prototype.stop = async function() {
-    this.finish();
+    this._finish();
     await this._page.evaluateJavaScript('function(){ stop(); }');
     // TODO: Stop the speed test on the phantom_runner
 };
@@ -105,8 +106,7 @@ Speedtest.prototype._handleEvent = function(data) {
 
 Speedtest.prototype._finish = function() {
     this._running = false;
-    // TODO: Should run this._cleanup automatically?
-    // TODO: Is this method even necessary??
+    this._cleanup();
 };
 
 Speedtest.prototype.awaitResult = function(timeout) {
