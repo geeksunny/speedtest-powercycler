@@ -1,44 +1,50 @@
 var Speedtest = require('./speedtest.js');
-var Powercycle = require('./powercycle.js');
+// var Powercycle = require('./powercycle.js');
 
 const SPEEDTEST_API_KEY = "12345678";
 
 
-var tester;
-var cycler = new Powercycle();
+// var tester;
+// var cycler = new Powercycle();
 
 
-var onstatus = function(o) {
-    // log?
-};
+// var onstatus = function(o) {
+//     // log?
+// };
+//
+// var oncomplete = function(o) {
+//     // todo: check results, run test?
+//     cycler.toggleTimed(5000);
+// };
+//
+// var onerror = function(o) {
+//     // todo: dump log, end the process
+// };
+//
+// var onconfirm = function(o) {
+//     // todo: is this needed?
+// };
+//
+// var onprogress = function(o) {
+//     // log?
+// };
+//
+// var callbacks = {
+//     onstatus: onstatus,
+//     oncomplete: oncomplete,
+//     onerror: onerror,
+//     onconfirm: onconfirm,
+//     onprogress: onprogress
+// };
 
-var oncomplete = function(o) {
-    // todo: check results, run test?
-    cycler.toggleTimed(5000);
-};
 
-var onerror = function(o) {
-    // todo: dump log, end the process
-};
+(async function() {
 
-var onconfirm = function(o) {
-    // todo: is this needed?
-};
+    const tester = await Speedtest.build(SPEEDTEST_API_KEY, {}, {});
+    tester.enableDebugMode(true);
+    await tester.start();
+    tester.awaitResult();
+    // await tester.stop();
+    console.log("done");
 
-var onprogress = function(o) {
-    // log?
-};
-
-var callbacks = {
-    onstatus: onstatus,
-    oncomplete: oncomplete,
-    onerror: onerror,
-    onconfirm: onconfirm,
-    onprogress: onprogress
-};
-
-
-// TODO: Does this need to be async/await here?
-tester = Speedtest.build(SPEEDTEST_API_KEY, null, callbacks);
-tester.enableDebugMode(true);
-tester.start();
+})();

@@ -1,56 +1,8 @@
-const EVENT_NAME = "phantomHookEvent";
-
-
-function dispatch(key, data) {
-    var ev = new CustomEvent(EVENT_NAME, {
-        detail: {
-            key: key,
-            data: data
-        }
-    });
-    document.dispatchEvent(ev);
+function sendback(key, data) {
+    const payload = { key: key, data: data };
+    window.callPhantom(payload);
 }
 
-const DEFAULT_CONFIG = {
-    conntype: undefined,
-    bufferbloat: false,
-    hz: 2,
-    onstatus: function(o) {
-        dispatch("onstatus", o);
-    },
-    oncomplete: function(o) {
-        dispatch("oncomplete", o);
-    },
-    onerror: function(o) {
-        dispatch("onerror", o);
-        // return true ?
-    },
-    onconfirm: function(o) {
-        dispatch("onconfirm", o);
-        return true
-    },
-    onprogress: function(o) {
-        dispatch("onprogress", o);
-    }
-};
-
-
-function start(config) {
-    var cfg = extend({}, defaultConfig, config);
-    if (!config.apikey) {
-        console.log("Field 'apikey' not defined in config object! Aborting...");
-        return;
-    }
-    dslr_speedtest({
-        op: 'start',
-        params: cfg
-    });
-}
-
-function stop() {
-    dslr_speedtest({ op: 'stop' });
-    dispatch("onstatus", {stopped:true});
-}
 
 function extend(target) {
     var sources = [].slice.call(arguments, 1);
@@ -60,4 +12,49 @@ function extend(target) {
         }
     });
     return target;
+}
+
+const DEFAULT_CONFIG = {
+    conntype: undefined,
+    bufferbloat: false,
+    hz: 2
+};
+
+const CALLBACKS = {
+    onstatus: function(o) {
+        sendback("onstatus", o);
+    },
+    oncomplete: function(o) {
+        sendback("oncomplete", o);
+    },
+    onerror: function(o) {
+        sendback("onerror", o);
+    },
+    onconfirm: function(o) {
+        sendback("onconfirm", o);
+        return true
+    },
+    onprogress: function(o) {
+        sendback("onprogress", o);
+    }
+};
+
+function start(config) {
+    if (typeof window.callPhantom !== 'function') {
+        console.log("PhantomJS not detected! Aborting...");
+        return;
+    }
+    if (!config.apiKey) {
+        console.log("Field 'apiKey' not defined in config object! Aborting...");
+        return;
+    }
+    let cfg = extend({}, DEFAULT_CONFIG, config, CALLBACKS);
+    dslr_speedtest({
+        op: 'start',
+        params: cfg
+    });
+}
+
+function stop() {
+    dslr_speedtest({ op: 'stop' });
 }
