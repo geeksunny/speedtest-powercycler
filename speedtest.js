@@ -1,6 +1,7 @@
 //
 //
 const util = require('util');
+const tools = require('./tools');
 const phantom = require('phantom');
 const Waiter = require('./waiter');
 
@@ -24,17 +25,6 @@ const DEFAULT_CONFIG = {
     // [ optional user data ]
     //udata: {"key":value};
 };
-
-
-function extend(target) {
-    const sources = [].slice.call(arguments, 1);
-    sources.forEach(function (source) {
-        for (let prop in source) {
-            target[prop] = source[prop];
-        }
-    });
-    return target;
-}
 
 
 function PhantomLogger(prefix, disabled) {
@@ -75,8 +65,8 @@ function Speedtest(apiKey, config, callbacks) {
     this.phantom = null;
     this.page = null;
 
-    this.callbacks = extend({}, callbacks);
-    this.config = extend({}, DEFAULT_CONFIG, config);
+    this.callbacks = tools.extendObject({}, callbacks);
+    this.config = tools.extendObject({}, DEFAULT_CONFIG, config);
     this.config.apiKey = apiKey;
 }
 
