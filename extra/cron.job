@@ -1,0 +1,1 @@
+30 4,16 * * * root /bin/sh /app/run_test.sh > /var/log/cron.log 2>&1
