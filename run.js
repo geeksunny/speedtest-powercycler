@@ -1,46 +1,33 @@
-var Speedtest = require('./speedtest.js');
-// var Powercycle = require('./powercycle.js');
+//const Powercycle = require('./powercycle.js');
+//let cycler = new Powercycle();
+//cycler.toggleTimed(5000);
+
+const Speedtest = require('./libs/speedtest.js');
+const tools = require('./libs/tools.js');
 
 const SPEEDTEST_API_KEY = "12345678";
 
 
-// var tester;
-// var cycler = new Powercycle();
+const sshServer = "";
+const sshCommand = "ls -al";
+const sshConfig = {
+};
 
-
-// var onstatus = function(o) {
-//     // log?
-// };
-//
-// var oncomplete = function(o) {
-//     // todo: check results, run test?
-//     cycler.toggleTimed(5000);
-// };
-//
-// var onerror = function(o) {
-//     // todo: dump log, end the process
-// };
-//
-// var onconfirm = function(o) {
-//     // todo: is this needed?
-// };
-//
-// var onprogress = function(o) {
-//     // log?
-// };
-//
-// var callbacks = {
-//     onstatus: onstatus,
-//     oncomplete: oncomplete,
-//     onerror: onerror,
-//     onconfirm: onconfirm,
-//     onprogress: onprogress
-// };
+const callbacks = {
+    oncomplete: function(o) {
+        // todo: try/catch/etc
+        tools.execSsh(sshServer, sshCommand, sshConfig);
+    },
+    onerror: function(o) {
+        // todo: dump log, end the process
+        console.log(o);
+    }
+};
 
 
 (async function() {
 
-    const tester = await Speedtest.build(SPEEDTEST_API_KEY, {}, {});
+    const tester = await Speedtest.build(SPEEDTEST_API_KEY, {}, callbacks);
     tester.enableDebugMode(true);
     await tester.start();
     tester.awaitResult();
