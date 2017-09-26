@@ -5,7 +5,7 @@ function sendback(key, data) {
 
 
 function extendObject(target) {
-    var sources = [].slice.call(arguments, 1);
+    const sources = [].slice.call(arguments, 1);
     sources.forEach(function (source) {
         for (var prop in source) {
             target[prop] = source[prop];
@@ -48,7 +48,7 @@ function start(config) {
         console.log("Field 'apiKey' not defined in config object! Aborting...");
         return;
     }
-    let cfg = extendObject({}, DEFAULT_CONFIG, config, CALLBACKS);
+    const cfg = extendObject({}, DEFAULT_CONFIG, config, CALLBACKS);
     dslr_speedtest({
         op: 'start',
         params: cfg

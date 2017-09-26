@@ -9,7 +9,7 @@ function Waiter() {
     this._afterwards = undefined;
 }
 
-Waiter.start = function() {
+Waiter.create = function() {
     return new Waiter();
 };
 

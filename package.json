@@ -6,6 +6,7 @@
   "main": "run.js",
   "dependencies": {
     "phantom": "^4.0.5",
-    "serialport": "^5.0.0"
+    "serialport": "^5.0.0",
+    "sequest": "latest"
   }
 }

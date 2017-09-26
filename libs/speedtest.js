@@ -152,7 +152,7 @@ Speedtest.prototype.doFinish = async function() {
 };
 
 Speedtest.prototype.awaitResult = async function(timeout) {
-    let waiter = Waiter.start()
+    let waiter = Waiter.create()
         .timeout(timeout)
         .waitFor(function() {
             return this.running === false;
