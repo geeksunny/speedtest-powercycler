@@ -14,13 +14,13 @@ const sshConfig = {
 };
 
 const callbacks = {
-    oncomplete: function(o) {
-        // todo: try/catch/etc
-        tools.execSsh(sshServer, sshCommand, sshConfig);
-    },
-    onerror: function(o) {
-        // todo: dump log, end the process
-        console.log(o);
+    onresult: function(result) {
+        console.log(result);
+        if (result.success) {
+            if (result.down <= 250) {
+                tools.execSsh(sshServer, sshCommand, sshConfig);
+            }
+        }
     }
 };
 
@@ -29,8 +29,9 @@ const callbacks = {
 
     const tester = await Speedtest.build(SPEEDTEST_API_KEY, {}, callbacks);
     tester.enableDebugMode(true);
+    tester.disableUploadTest(true);
     await tester.start();
-    tester.awaitResult();
+    await tester.awaitResult(90000);
     // await tester.stop();
     console.log("done");
 

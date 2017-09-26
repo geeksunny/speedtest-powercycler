@@ -61,9 +61,17 @@ PhantomLogger.prototype.log = function(type, msg) {
 function Speedtest(apiKey, config, callbacks) {
     this.running = false;
     this.debugMode = false;
+    this.skipUpload = false;
 
     this.phantom = null;
     this.page = null;
+    this.testResults = {
+        success: undefined,
+        message: undefined,
+        data: undefined,
+        up: 0,
+        down: 0
+    };
 
     this.callbacks = tools.extendObject({}, callbacks);
     this.config = tools.extendObject({}, DEFAULT_CONFIG, config);
@@ -113,14 +121,12 @@ Speedtest.prototype.doCleanup = async function() {
     await this.phantom.exit();
 };
 
-
 Speedtest.prototype.start = async function(msDelayClick) {
     this.running = true;
     const delay = (msDelayClick > 0) ? msDelayClick : CLICK_DELAY_DEFAULT;
     await Waiter.sleep(delay);
     const cmd = util.format('function(){ start(%s); }', JSON.stringify(this.config));
     await this.page.evaluateJavaScript(cmd);
-
 };
 
 Speedtest.prototype.stop = async function() {
@@ -129,16 +135,20 @@ Speedtest.prototype.stop = async function() {
     // await this.doFinish();
 };
 
-Speedtest.prototype.handleEvent = async function(data) {
+Speedtest.prototype.handleEvent = function(data) {
     const callback = this.callbacks[data.key];
     this.handleCallback(data.data, callback);
     switch (data.key) {
         case "oncomplete":
         case "onerror":
-            await this.doFinish();
+            this.handleFinish(data.key, data.data);
+            break;
+        case "onprogress":
+            this.handleProgress(data.data);
             break;
         case "onstatus":
-        case "onprogress":
+            this.handleStatus(data.data);
+            break;
         case "onconfirm":
         default:
             //
@@ -162,11 +172,52 @@ Speedtest.prototype.awaitResult = async function(timeout) {
             console.log("Waiter timed out: "+timedout);
         });
     await waiter.go();
+    return this.testResults;
 };
 
+Speedtest.prototype.getResult = function() {
+    return this.testResults;
+};
+
+Speedtest.prototype.disableUploadTest = function(bool) {
+    this.skipUpload = bool === true;
+};
 
 Speedtest.prototype.enableDebugMode = function(bool) {
     this.debugMode = bool === true;
+};
+
+Speedtest.prototype.handleProgress = function(data) {
+    if (!this.skipUpload) {
+        return;
+    }
+    const doing = data.doing;
+    if (doing === "uploading") {
+        this.stop();
+    } else if (doing === "complete") {
+        this.handleFinish("stopped", data);
+    }
+};
+
+Speedtest.prototype.handleFinish = function(type, data) {
+    this.testResults.success = type === ("oncomplete" || "stopped");
+    this.testResults.message = data.msg;
+    this.testResults.data = data;
+    if (type === "oncomplete") {
+        this.testResults.down = data.download;
+        this.testResults.up = data.upload;
+    }
+    const callback = this.callbacks["onresult"];
+    this.handleCallback(this.testResults, callback);
+    this.doFinish();    // TODO: Does this need to be async/await?
+};
+
+Speedtest.prototype.handleStatus = function(data) {
+    if (data.direction === "downloading") {
+        this.testResults.down = data.down;
+    } else if (data.direction === "uploading") {
+        this.testResults.up = data.up;
+    }
 };
 
 Speedtest.prototype.handleCallback = function(data, delegate) {
