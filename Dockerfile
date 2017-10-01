@@ -17,7 +17,10 @@ COPY package.json package-lock.json ./
 RUN npm install
 
 # Copy app files
-COPY run.js libs phantom extra/run_test.sh ./
+COPY run.js extra/run_test.sh ./
+RUN chmod 0544 run_test.sh
+COPY libs ./libs
+COPY phantom ./phantom
 
 # Run the cron daemon and tail the log to keep the container running
 CMD cron && tail -f /var/log/cron.log
