@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>speed.check</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/jquery.js"></script>
+    <script>
+        const socket = io();
+        $(function() {
+            let running = false;
+            const startBtn = $('#start');
+            const stopBtn = $('#stop');
+            const log = $('#log');
+            const result = $('#result');
+
+            function toggleButtons() {
+                for (btn in [startBtn, stopBtn]) {
+                    if (btn.is(':disabled')) {
+                        btn.removeAttr('disabled');
+                    } else {
+                        btn.attr('disabled', 'disabled');
+                    }
+                }
+
+            }
+
+            socket.on('ready', function() {
+                startBtn.removeAttr('disabled');
+                $('#status').text(' ');
+            });
+
+            socket.on('update', function(data) {
+                log.append('<br />'+JSON.stringify(data));
+            });
+
+            socket.on('finished', function(data) {
+                result.text(JSON.stringify(data));
+                onStopped();
+            });
+
+            startBtn.click(function() {
+                socket.emit('start', true);
+                running = true;
+                toggleButtons();
+                return false;
+            });
+
+            stopBtn.click(function() {
+                socket.emit('stop');
+                onStopped();
+                return false;
+            });
+
+            function onStopped() {
+                if (running) {
+                    running = false;
+                    toggleButtons();
+                }
+            }
+
+        });
+    </script>
+    <style>
+        body {
+            text-align: center;
+        }
+        #log {
+            width: 50%;
+            height: 50%;
+        }
+        #result {
+            width: 25%;
+        }
+    </style>
+</head>
+<body>
+    <h1>speed.check</h1>
+    <button id="start" disabled="disabled">check.speed</button>
+    <span style="padding: 2.5px;" id="status">not ready yet</span>
+    <button id="stop" disabled="disabled">stop.test</button>
+    <div id="result"></div>
+    <div id="log"></div>
+</body>
+</html>

@@ -135,6 +135,12 @@ Speedtest.prototype.stop = async function() {
     // await this.doFinish();
 };
 
+Speedtest.prototype.stopIfRunning = async function() {
+    if (this.running) {
+        return this.stop();
+    }
+};
+
 Speedtest.prototype.handleEvent = function(data) {
     const callback = this.callbacks[data.key];
     this.handleCallback(data.data, callback);

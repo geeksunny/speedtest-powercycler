@@ -1,12 +1,15 @@
 {
   "name": "speedtest-powercycler",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Power-cycle a modem or something if your internet speeds are too slow.",
   "author": "Justin Swanson <geeksunny@gmail.com>",
   "main": "run.js",
   "dependencies": {
+    "express": "^4.16.1",
+    "jquery": "^3.2.1",
     "phantom": "^4.0.5",
+    "sequest": "^0.10.0",
     "serialport": "^5.0.0",
-    "sequest": "latest"
+    "socket.io": "^2.0.3"
   }
 }

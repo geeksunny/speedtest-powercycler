@@ -67,12 +67,13 @@ Powercycle.prototype.toggleTimed = function(time) {
     }
 
     return new Promise(function(resolve, reject) {
+        let parent = this;
         this.toggle().then(function(data) {
-            this.isTimed = true;
+            parent.isTimed = true;
             return Waiter.sleep(time);
         }).then(function(data) {
-            this.isTimed = false;
-            return this.toggle();
+            parent.isTimed = false;
+            return parent.toggle();
         }).then(function(data) {
             resolve(true);
         }).catch(function(err) {
