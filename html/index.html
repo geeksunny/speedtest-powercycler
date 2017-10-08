@@ -83,8 +83,11 @@
 
             function log(data) {
                 let line = data.key + " :: " + JSON.stringify(data.data) + "<br />";
-                dom.text.console.append(line);
-                dom.text.console.animate({scrollTop: dom.text.console.height()}, "fast");
+                dom.text.console
+                    .append(line)
+                    .animate(
+                        { scrollTop: dom.text.console.height() },
+                        { duration: 200 } );
             }
 
             function onStopped() {
