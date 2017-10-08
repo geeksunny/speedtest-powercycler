@@ -22,5 +22,5 @@ RUN chmod 0544 run_test.sh
 COPY libs ./libs
 COPY phantom ./phantom
 
-# Run the cron daemon and tail the log to keep the container running
-CMD cron && tail -f /var/log/cron.log
+# Run the cron daemon and app server
+CMD cron && npm run

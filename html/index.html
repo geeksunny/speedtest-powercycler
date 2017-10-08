@@ -3,19 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <title>speed.check</title>
+    <link rel="icon" type="image/png" href="images/favicon.png">
+
     <script src="/socket.io/socket.io.js"></script>
-    <script src="/jquery.js"></script>
+    <script src="/js/jquery.js"></script>
     <script>
         const socket = io();
         $(function() {
             let running = false;
-            const startBtn = $('#start');
-            const stopBtn = $('#stop');
-            const log = $('#log');
-            const result = $('#result');
+            const dom = {
+                button: {
+                    start: $('#start'),
+                    stop: $('#stop')
+                },
+                value: {
+                    ping: $('#ping_value'),
+                    download: $('#download_value'),
+                    upload: $('#upload_value'),
+                    progress: $('#progress_value')
+                },
+                text: {
+                    status: $('#status'),
+                    console: $('#console')
+                }
+            };
 
             function toggleButtons() {
-                for (btn in [startBtn, stopBtn]) {
+                for (key in dom.button) {
+                    let btn = dom.button[key];
                     if (btn.is(':disabled')) {
                         btn.removeAttr('disabled');
                     } else {
@@ -26,31 +41,51 @@
             }
 
             socket.on('ready', function() {
-                startBtn.removeAttr('disabled');
-                $('#status').text(' ');
+                dom.button.start.removeAttr('disabled');
+                dom.text.status.text(' ');
             });
 
             socket.on('update', function(data) {
-                log.append('<br />'+JSON.stringify(data));
+                switch (data.key) {
+                    case "onprogress":
+                        handleProgress(data.data);
+                        break;
+                    case "onstatus":
+                        handleStatus(data.data);
+                        break;
+                    case "oncomplete":
+                    case "onerror":
+                    case "onconfirm":
+                    default:
+                        break;
+                }
+                log(data);
             });
 
             socket.on('finished', function(data) {
-                result.text(JSON.stringify(data));
+                dom.text.status.text('Finished');
+                //JSON.stringify(data)
                 onStopped();
             });
 
-            startBtn.click(function() {
+            dom.button.start.click(function() {
                 socket.emit('start', true);
                 running = true;
                 toggleButtons();
                 return false;
             });
 
-            stopBtn.click(function() {
+            dom.button.stop.click(function() {
                 socket.emit('stop');
                 onStopped();
                 return false;
             });
+
+            function log(data) {
+                let line = data.key + " :: " + JSON.stringify(data.data) + "<br />";
+                dom.text.console.append(line);
+                dom.text.console.animate({scrollTop: dom.text.console.height()}, "fast");
+            }
 
             function onStopped() {
                 if (running) {
@@ -59,27 +94,86 @@
                 }
             }
 
+            function handleProgress(data) {
+                dom.value.progress.text(data.progress);
+            }
+
+            function handleStatus(data) {
+                switch (data.direction) {
+                    case "pinging":
+                        dom.value.ping.text(data.ping);
+                        break;
+                    case "downloading":
+                        dom.value.download.text(Number(data.down).toFixed(2));
+                        break;
+                    case "uploading":
+                        dom.value.upload.text(Number(data.up).toFixed(2));
+                        break;
+                }
+            }
+
+            function handleFinish(data) {
+                //
+            }
+
         });
     </script>
+
+    <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/skeleton.css">
     <style>
         body {
             text-align: center;
+            background-color: #f8f8ff;
         }
-        #log {
-            width: 50%;
-            height: 50%;
-        }
-        #result {
-            width: 25%;
+        #console {
+            background-color: black;
+            color: green;
+            text-align: left;
+            padding: 5px;
+            height: 400px;
+            overflow: scroll;
         }
     </style>
 </head>
 <body>
-    <h1>speed.check</h1>
-    <button id="start" disabled="disabled">check.speed</button>
-    <span style="padding: 2.5px;" id="status">not ready yet</span>
-    <button id="stop" disabled="disabled">stop.test</button>
-    <div id="result"></div>
-    <div id="log"></div>
+    <div class="container">
+        <div class="row">
+            <div class="twelve columns" style="text-align: center; padding: 24px;">
+                <h1>speedtest-powercycler</h1>
+                <h4 id="status">Not Ready</h4>
+            </div>
+        </div>
+        <div class="row">
+            <div class="offset-by-two two columns">
+                <button id="start" disabled="disabled">Start Test</button>
+            </div>
+            <div class="offset-by-one three columns">
+                <h4>Ping</h4>
+                <h1><span id="ping_value">0</span>ms</h1>
+            </div>
+            <div class="offset-by-one two columns">
+                <button id="stop" disabled="disabled">Stop Test</button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="one-third column">
+                <h4>Download</h4>
+                <h1><span id="download_value">0</span> Mbps</h1>
+            </div>
+            <div class="one-third column">
+                <h4>Progress</h4>
+                <h1><span id="progress_value">0</span>%</h1>
+            </div>
+            <div class="one-third column">
+                <h4>Upload</h4>
+                <h1><span id="upload_value">0</span> Mbps</h1>
+            </div>
+        </div>
+        <div class="row">
+            <div id="console" class="twelve columns"></div>
+        </div>
+    </div>
 </body>
 </html>

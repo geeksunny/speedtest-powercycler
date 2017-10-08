@@ -1,29 +1,30 @@
 //
 
 const Speedtest = require('./libs/speedtest.js');
-const app = require('express')();
+const express = require('express');
+const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 
-app.get('/', function(req, res) {
-    res.sendFile(__dirname + '/html/index.html');
-});
-app.get('/jquery.js', function(req, res) {
-    res.sendFile(__dirname + '/node_modules/jquery/dist/jquery.slim.js');
+app.use(express.static('html'));
+app.get('/js/jquery.js', function(req, res) {
+    res.sendFile(__dirname + '/node_modules/jquery/dist/jquery.js');
 });
 
 io.on('connection', function(socket) {
     console.log('a user connected.');
 
-    const sendBack = function(data) {
-        socket.emit("update", data);
+    const sendBack = function(key) {
+        return function(data) {
+            socket.emit("update", { key:key, data:data });
+        };
     };
     const callbacks = {
-        oncomplete: sendBack,
-        onerror: sendBack,
-        onprogress: sendBack,
-        onstatus: sendBack,
-        onconfirm: sendBack,
+        oncomplete: sendBack('oncomplete'),
+        onerror: sendBack('onerror'),
+        onprogress: sendBack('onprogress'),
+        onstatus: sendBack('onstatus'),
+        onconfirm: sendBack('onconfirm'),
         onresult: function(result) {
             socket.emit("finished", result);
         }
@@ -31,7 +32,7 @@ io.on('connection', function(socket) {
     let test = undefined;
     Speedtest.build("12345678", {}, callbacks).then(function(result) {
         test = result;
-        test.enableDebugMode(true);
+        test.enableDebugMode(false);
         test.disableUploadTest(true);
         socket.emit('ready');
     });
