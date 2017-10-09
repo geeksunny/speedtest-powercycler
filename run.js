@@ -4,21 +4,14 @@
 
 const Speedtest = require('./libs/speedtest.js');
 const tools = require('./libs/tools.js');
-
-const SPEEDTEST_API_KEY = "12345678";
-
-
-const sshServer = "";
-const sshCommand = "ls -al";
-const sshConfig = {
-};
+const config = require('./libs/config.js');
 
 const callbacks = {
     onresult: function(result) {
         console.log(result);
         if (result.success) {
             if (result.down <= 250) {
-                tools.execSsh(sshServer, sshCommand, sshConfig);
+                tools.execSsh(config.command.sshServer, config.command.sshCommand, config.command.sshConfig);
             }
         }
     }
@@ -27,11 +20,11 @@ const callbacks = {
 
 (async function() {
 
-    const tester = await Speedtest.build(SPEEDTEST_API_KEY, {}, callbacks);
-    tester.enableDebugMode(true);
-    tester.disableUploadTest(true);
+    const tester = await Speedtest.build(config.speedtest.apiKey, {}, callbacks);
+    tester.enableDebugMode(config.speedtest.enableDebugMode);
+    tester.disableUploadTest(config.speedtest.disableUploadTest);
     await tester.start();
-    await tester.awaitResult(90000);
+    await tester.awaitResult(config.speedtest.timeout);
     // await tester.stop();
     console.log("done");
 
