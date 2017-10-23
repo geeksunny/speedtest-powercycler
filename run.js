@@ -1,7 +1,3 @@
-//const Powercycle = require('./powercycle.js');
-//let cycler = new Powercycle();
-//cycler.toggleTimed(5000);
-
 const Speedtest = require('./libs/speedtest.js');
 const tools = require('./libs/tools.js');
 const config = require('./libs/config.js');
@@ -20,7 +16,8 @@ const callbacks = {
 
 (async function() {
 
-    const tester = await Speedtest.build(config.speedtest.apiKey, {}, callbacks);
+    // TODO: add catch blocks for any errors that may occur with async functions
+    const tester = await Speedtest.build(config.speedtest.apiKey, config.speedtest.cfg, callbacks);
     tester.enableDebugMode(config.speedtest.enableDebugMode);
     tester.disableUploadTest(config.speedtest.disableUploadTest);
     await tester.start();
@@ -28,4 +25,5 @@ const callbacks = {
     // await tester.stop();
     console.log("done");
 
+    // TODO: Only output a json object of result. this will get logged with cron.
 })();

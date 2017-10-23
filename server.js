@@ -1,6 +1,5 @@
-//
-
 const Speedtest = require('./libs/speedtest.js');
+const config = require('./libs/config.js');
 const express = require('express');
 const app = express();
 const http = require('http').Server(app);
@@ -30,12 +29,14 @@ io.on('connection', function(socket) {
         }
     };
     let test = undefined;
-    Speedtest.build("12345678", {}, callbacks).then(function(result) {
-        test = result;
-        test.enableDebugMode(false);
-        test.disableUploadTest(true);
-        socket.emit('ready');
-    });
+    Speedtest
+        .build(config.speedtest.apiKey, config.speedtest.cfg, callbacks)
+        .then(function(result) {
+            test = result;
+            test.enableDebugMode(config.speedtest.enableDebugMode);
+            test.disableUploadTest(config.speedtest.disableUploadTest);
+            socket.emit('ready');
+        });
 
     socket.on('start', function() {
         console.log('Starting test...');

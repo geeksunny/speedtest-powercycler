@@ -5,10 +5,6 @@ const tools = require('./tools');
 const phantom = require('phantom');
 const Waiter = require('./waiter');
 
-// TODO: Look in to making this injectable into phantom/run.html
-//const SPEEDTEST_URL = "https://www.dslreports.com/assets/st/1.6/js/speedtest.js";
-//const SPEEDTEST_API_KEY = "12345678";
-
 const SPEEDTEST_URL = "./phantom/run.html";
 const DEBUG_LOG_FORMAT = "[DEBUG] :: %s\n";
 const CLICK_DELAY_DEFAULT = 2000;
