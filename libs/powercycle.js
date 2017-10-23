@@ -1,5 +1,3 @@
-//
-//
 const SerialPort = require('serialport');
 const Waiter = require('./waiter');
 
@@ -11,18 +9,20 @@ function Powercycle(device) {
     this.isTimed = false;
 }
 
-Powercycle.cycle = function(ms) {
+Powercycle.cycle = function(ms, device) {
     let time = (typeof ms === "undefined") ? 10000 : ms;
-    let cycler = Powercycle.open();
+    let cycler = Powercycle.open(device);
     cycler.toggleTimed(time).then(function(stateChanged) {
-        //
+        let stateStr = stateChanged ? "was changed" : "did not change";
+        console.log("Serial device's status " + stateStr);
+        return stateChanged;
     }).catch(function(err) {
-        //
+        console.log("Error occurred during serial operation!\n" + err);
     });
-}
+};
 
-Powercycle.open = function() {
-    let pc = new Powercycle();
+Powercycle.open = function(device) {
+    let pc = new Powercycle(device);
     pc.open().then(function(data) {
         //TODO
     }).catch(function (err) {

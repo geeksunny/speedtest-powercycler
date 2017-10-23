@@ -2,12 +2,18 @@ const Speedtest = require('./libs/speedtest.js');
 const tools = require('./libs/tools.js');
 const config = require('./libs/config.js');
 
+// TODO: make this code accessible to server.js
 const callbacks = {
     onresult: function(result) {
         console.log(result);
-        if (result.success) {
-            if (result.down <= 250) {
-                tools.execSsh(config.command.sshServer, config.command.sshCommand, config.command.sshConfig);
+        if (result.down <= cfg.speedtest.lowThreshold) {
+            console.log("Download speed was at or below the threshold.");
+            if (cfg.command.useSSH) {
+                console.log("Executing command via SSH.");
+                tools.execSsh(config.command.sshServer, config.command.exec, config.command.sshConfig);
+            } else {
+                console.log("Executing command in local shell.");
+                tools.execShell(config.command.exec);
             }
         }
     }

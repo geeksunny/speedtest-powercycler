@@ -1,5 +1,3 @@
-//
-//
 const util = require('util');
 const tools = require('./tools');
 const phantom = require('phantom');
