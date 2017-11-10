@@ -40,7 +40,8 @@
 
             }
 
-            socket.on('ready', function() {
+            socket.on('ready', function(options) {
+                // TODO: parse and present options to the user
                 dom.button.start.removeAttr('disabled');
                 dom.text.status.text(' ');
             });

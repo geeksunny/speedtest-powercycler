@@ -25,5 +25,14 @@ module.exports = {
         useSSH: pickEnvironmentValue("COMMAND_USE_SSH", false),
         sshServer: pickEnvironmentValue("COMMAND_SSH_SERVER", undefined),
         sshConfig: pickEnvironmentValue("COMMAND_SSH_CONFIG", {})
+    },
+    Option: function(key, name, description, defaultValue) {
+        return {
+            key: key,
+            name: name,
+            description: description,
+            default: defaultValue,
+            type: typeof(defaultValue)
+        };
     }
 };
