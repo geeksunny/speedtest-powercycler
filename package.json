@@ -5,7 +5,7 @@
   "author": "Justin Swanson <geeksunny@gmail.com>",
   "main": "server.js",
   "dependencies": {
-    "express": "^4.16.1",
+    "express": "^4.18.2",
     "jquery": "^3.4.0",
     "phantom": "^4.0.5",
     "sequest": "^0.10.0",
